@@ -12,7 +12,7 @@ pipeline {
 
                git branch: 'master',
 
-               url: ' https://github.com/hwafa/timesheetproject.git'
+               url: 'https://github.com/ChkiliSaif741/Chekili_Saif_4SIM3.git'
 
           }
 
