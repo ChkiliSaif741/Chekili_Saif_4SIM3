@@ -1,28 +1,33 @@
 pipeline {
-    agent any
 
-    tools {
-        maven 'MAVEN_HOME'
-        jdk 'JAVA_HOME'
-    }
+ agent any
 
-    stages {
-        stage('Checkout') {
-            steps {
-                git branch: 'main', url: 'https://github.com/ChkiliSaif741/Chekili_Saif_4SIM3.git'
-            }
-        }
+ tools {jdk 'JAVA_HOME’, maven 'M2_HOME'}
 
-        stage('Build') {
-                    steps {
-                        sh 'mvn clean install -DskipTests'
-                    }
-        }
+ stages {
 
-        stage('Package') {
-                    steps {
-                        archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
-                    }
-                }
-    }
+ stage('GIT') {
+
+           steps {
+
+               git branch: 'master',
+
+               url: ' https://github.com/hwafa/timesheetproject.git'
+
+          }
+
+     }
+
+ stage ('Compile Stage') {
+
+ steps {
+
+ sh 'mvn clean compile'
+
+ }
+
+ }
+
+ }
+
 }
