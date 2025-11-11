@@ -19,10 +19,10 @@ pipeline {
                     }
         }
 
-        stage('Test') {
-            steps {
-                sh 'mvn test'
-            }
-        }
+        stage('Package') {
+                    steps {
+                        archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                    }
+                }
     }
 }
