@@ -10,7 +10,7 @@ pipeline {
 
            steps {
 
-               git branch: 'master',
+               git branch: 'main',
 
                url: 'https://github.com/ChkiliSaif741/Chekili_Saif_4SIM3.git'
 
