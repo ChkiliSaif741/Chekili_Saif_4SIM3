@@ -8,7 +8,7 @@ pipeline {
 
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')
-        IMAGE_NAME = "chkilisaif/springboot-app"
+        IMAGE_NAME = "chkilisaif741/springboot-app"
     }
 
     stages {
