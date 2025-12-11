@@ -4,11 +4,10 @@ pipeline {
     tools {
         jdk 'JAVA_HOME'
         maven 'MAVEN_HOME'
-        sonarScanner 'sonar-scanner'
     }
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub') // identifiants Docker Hub
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
         IMAGE_NAME = "chkilisaif741/springboot-app"
     }
 
@@ -30,11 +29,11 @@ pipeline {
             steps {
                 withSonarQubeEnv('sonarqube') {
                     sh """
-                    sonar-scanner \
+                    mvn sonar:sonar \
                         -Dsonar.projectKey=springboot-app \
                         -Dsonar.projectName=springboot-app \
-                        -Dsonar.sources=src \
-                        -Dsonar.java.binaries=target
+                        -Dsonar.host.url=$SONAR_HOST_URL \
+                        -Dsonar.login=$SONAR_AUTH_TOKEN
                     """
                 }
             }
@@ -71,9 +70,7 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 sh """
-                # Mettre à jour le déploiement Spring Boot
                 kubectl set image deployment/spring-app spring-app=${IMAGE_NAME}:latest
-                # Vérifier le déploiement
                 kubectl rollout status deployment/spring-app
                 """
             }
