@@ -26,25 +26,21 @@ pipeline {
             }
         }
 
-        withSonarQubeEnv('sonarqube') {
-    sh """
-    mvn sonar:sonar \
-        -Dsonar.projectKey=springboot-app \
-        -Dsonar.projectName=springboot-app \
-        -Dsonar.host.url=$SONAR_HOST_URL \
-        -Dsonar.login=$SONAR_TOKEN
-    """
-    
-    timeout(time: 10, unit: 'MINUTES') { // increased timeout
-        waitForQualityGate abortPipeline: true
-    }
-}
-
-
-        stage('Quality Gate') {
+        stage('SonarQube Analysis') {
             steps {
-                timeout(time: 3, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
+                withSonarQubeEnv('sonarqube') {
+                    sh """
+                    mvn sonar:sonar \
+                        -Dsonar.projectKey=springboot-app \
+                        -Dsonar.projectName=springboot-app \
+                        -Dsonar.host.url=$SONAR_HOST_URL \
+                        -Dsonar.login=$SONAR_TOKEN
+                    """
+                    
+                    // Wait for Quality Gate, increase timeout for local Mac
+                    timeout(time: 10, unit: 'MINUTES') {
+                        waitForQualityGate abortPipeline: true
+                    }
                 }
             }
         }
