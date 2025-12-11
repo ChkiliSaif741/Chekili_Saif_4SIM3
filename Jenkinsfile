@@ -26,23 +26,25 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('sonarqube') {
-                    sh """
-                    mvn sonar:sonar \
-                        -Dsonar.projectKey=springboot-app \
-                        -Dsonar.projectName=springboot-app \
-                        -Dsonar.host.url=$SONAR_HOST_URL \
-                        -Dsonar.token=$SONAR_TOKEN
-                    """
+stage('SonarQube Analysis') {
+    steps {
+        withSonarQubeEnv('sonarqube') {
+            sh """
+            mvn sonar:sonar \
+                -Dsonar.projectKey=springboot-app \
+                -Dsonar.projectName=springboot-app \
+                -Dsonar.host.url=$SONAR_HOST_URL \
+                -Dsonar.token=$SONAR_TOKEN
+            """
 
-                    timeout(time: 10, unit: 'MINUTES') {
-                        waitForQualityGate abortPipeline: true
-                    }
-                }
+            // Wait for Quality Gate immediately after scan
+            timeout(time: 10, unit: 'MINUTES') {
+                waitForQualityGate abortPipeline: true
             }
         }
+    }
+}
+
 
         stage('Docker Build') {
             steps {
