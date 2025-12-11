@@ -4,6 +4,7 @@ pipeline {
     tools {
         jdk 'JAVA_HOME'
         maven 'MAVEN_HOME'
+        sonarScanner 'sonar-scanner'
     }
 
     environment {
@@ -12,6 +13,7 @@ pipeline {
     }
 
     stages {
+
         stage('GIT Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/ChkiliSaif741/Chekili_Saif_4SIM3.git'
@@ -24,33 +26,45 @@ pipeline {
             }
         }
 
-        stage('Docker Build') {
+        stage('SonarQube Analysis') {
             steps {
-                script {
+                withSonarQubeEnv('sonarqube') {
                     sh """
-                    docker build -t ${IMAGE_NAME}:latest .
+                    sonar-scanner \
+                        -Dsonar.projectKey=springboot-app \
+                        -Dsonar.projectName=springboot-app \
+                        -Dsonar.sources=src \
+                        -Dsonar.java.binaries=target
                     """
                 }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 3, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                sh "docker build -t ${IMAGE_NAME}:latest ."
             }
         }
 
         stage('Docker Login') {
             steps {
-                script {
-                    sh """
-                    echo "${DOCKERHUB_CREDENTIALS_PSW}" | docker login -u "${DOCKERHUB_CREDENTIALS_USR}" --password-stdin
-                    """
-                }
+                sh """
+                echo "${DOCKERHUB_CREDENTIALS_PSW}" | docker login -u "${DOCKERHUB_CREDENTIALS_USR}" --password-stdin
+                """
             }
         }
 
         stage('Docker Push') {
             steps {
-                script {
-                    sh """
-                    docker push ${IMAGE_NAME}:latest
-                    """
-                }
+                sh "docker push ${IMAGE_NAME}:latest"
             }
         }
     }
