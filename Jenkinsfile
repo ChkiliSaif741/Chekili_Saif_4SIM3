@@ -8,7 +8,7 @@ pipeline {
     }
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub') // identifiants Docker Hub
         IMAGE_NAME = "chkilisaif741/springboot-app"
     }
 
@@ -65,6 +65,17 @@ pipeline {
         stage('Docker Push') {
             steps {
                 sh "docker push ${IMAGE_NAME}:latest"
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh """
+                # Mettre à jour le déploiement Spring Boot
+                kubectl set image deployment/spring-app spring-app=${IMAGE_NAME}:latest
+                # Vérifier le déploiement
+                kubectl rollout status deployment/spring-app
+                """
             }
         }
     }
