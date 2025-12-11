@@ -7,8 +7,8 @@ pipeline {
     }
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub') // your DockerHub credentials in Jenkins
-        SONAR_TOKEN = credentials('sonar-token')        // your SonarQube token in Jenkins
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+        SONAR_TOKEN = credentials('sonar-token')
         IMAGE_NAME = "chkilisaif741/springboot-app"
     }
 
@@ -29,7 +29,6 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonarqube') {
-                    // Run SonarQube scan
                     sh """
                     mvn sonar:sonar \
                         -Dsonar.projectKey=springboot-app \
@@ -38,7 +37,6 @@ pipeline {
                         -Dsonar.token=$SONAR_TOKEN
                     """
 
-                    // Wait for Quality Gate result (increase timeout for local Mac)
                     timeout(time: 10, unit: 'MINUTES') {
                         waitForQualityGate abortPipeline: true
                     }
@@ -54,9 +52,13 @@ pipeline {
 
         stage('Docker Login') {
             steps {
-                sh """
-                echo "${DOCKERHUB_CREDENTIALS_PSW}" | docker login -u "${DOCKERHUB_CREDENTIALS_USR}" --password-stdin
-                """
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASSWORD'
+                )]) {
+                    sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin'
+                }
             }
         }
 
@@ -73,15 +75,6 @@ pipeline {
                 kubectl rollout status deployment/spring-app
                 """
             }
-        }
-    }
-
-    post {
-        failure {
-            echo "Pipeline failed. Please check the logs!"
-        }
-        success {
-            echo "Pipeline completed successfully!"
         }
     }
 }
