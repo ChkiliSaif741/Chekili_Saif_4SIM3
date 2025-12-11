@@ -8,6 +8,7 @@ pipeline {
 
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+        SONAR_TOKEN = credentials('sonar-token')
         IMAGE_NAME = "chkilisaif741/springboot-app"
     }
 
@@ -29,12 +30,12 @@ pipeline {
             steps {
                 withSonarQubeEnv('sonarqube') {
                     sh """
-                    mvn sonar:sonar \
+                        mvn sonar:sonar \
                         -Dsonar.projectKey=springboot-app \
                         -Dsonar.projectName=springboot-app \
                         -Dsonar.host.url=$SONAR_HOST_URL \
-                        -Dsonar.login=$SONAR_AUTH_TOKEN
-                    """
+                        -Dsonar.login=$SONAR_TOKEN
+                       """
                 }
             }
         }
