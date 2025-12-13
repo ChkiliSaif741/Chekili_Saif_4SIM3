@@ -4,16 +4,15 @@ pipeline {
     tools {
         jdk 'JAVA_HOME'
         maven 'MAVEN_HOME'
-        sonarScanner 'sonar-scanner'
     }
 
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+        SONAR_TOKEN = credentials('sonar-token')
         IMAGE_NAME = "chkilisaif741/springboot-app"
     }
 
     stages {
-
         stage('GIT Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/ChkiliSaif741/Chekili_Saif_4SIM3.git'
@@ -30,19 +29,19 @@ pipeline {
             steps {
                 withSonarQubeEnv('sonarqube') {
                     sh """
-                    sonar-scanner \
+                    mvn sonar:sonar \
                         -Dsonar.projectKey=springboot-app \
                         -Dsonar.projectName=springboot-app \
-                        -Dsonar.sources=src \
-                        -Dsonar.java.binaries=target
+                        -Dsonar.host.url=$SONAR_HOST_URL \
+                        -Dsonar.token=$SONAR_TOKEN
                     """
                 }
             }
         }
 
-        stage('Quality Gate') {
+        stage('SonarQube Quality Gate') {
             steps {
-                timeout(time: 3, unit: 'MINUTES') {
+                timeout(time: 10, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
@@ -56,15 +55,28 @@ pipeline {
 
         stage('Docker Login') {
             steps {
-                sh """
-                echo "${DOCKERHUB_CREDENTIALS_PSW}" | docker login -u "${DOCKERHUB_CREDENTIALS_USR}" --password-stdin
-                """
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASSWORD'
+                )]) {
+                    sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin'
+                }
             }
         }
 
         stage('Docker Push') {
             steps {
                 sh "docker push ${IMAGE_NAME}:latest"
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh """
+                kubectl set image deployment/spring-app spring-app=${IMAGE_NAME}:latest
+                kubectl rollout status deployment/spring-app
+                """
             }
         }
     }
